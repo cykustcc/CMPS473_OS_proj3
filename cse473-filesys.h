@@ -49,16 +49,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DENTRY_MAX 10     /* 10 entries per block */
 
 /* block free values - in "free" field of block - identifies free or type of block if non-zero */
-#define FREE_BLOCK 0      
-#define DENTRY_BLOCK 1
-#define FILE_BLOCK 2
-#define FILE_DATA 3
-#define FS_BLOCK 4
-#define DIR_BLOCK 5
-#define ATTR_BLOCK 6
-//#define JOURNAL_BLOCK 7
-#define TXB_BLOCK 8
-#define TXE_BLOCK 9
+#define FREE_BLOCK 0                 // block is available                                                       
+#define DENTRY_BLOCK 1               // ddentry_t block (directory entry)                                        
+#define FILE_BLOCK 2                 // fcb_t block (file control block)                                         
+#define FILE_DATA 3                  // plain data block containing file data                                    
+#define FS_BLOCK 4                   // dfilesys_t block (filesystem superblock)                                 
+#define DIR_BLOCK 5                  // ddir_t block (directory block)                                           
+#define ATTR_BLOCK 6                 // N/A 
+//#define JOURNAL_BLOCK 70           // journal_t block (journal superblock)                                     
+#define TXB_BLOCK 8                  // txn_t block (transaction begin)                                          
+#define TXE_BLOCK 9                  // txn_t block (transaction end) 
 
 /* file system defines */
 #define FS_FILETABLE_SIZE 100    // overall filetable size

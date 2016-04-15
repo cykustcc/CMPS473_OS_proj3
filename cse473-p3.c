@@ -212,7 +212,7 @@ void fsInitialize( filesys_t *fs, char *fsfile )
   memset( fs->filetable, 0, FS_FILETABLE_SIZE * sizeof(file_t *));
 
   /* in-memory file system initialization - block cache */
-  block_cache = (unsigned int)malloc( FS_BCACHE_BLOCKS+1 * FS_BLOCKSIZE );
+  block_cache = (unsigned int)malloc( (FS_BCACHE_BLOCKS+1) * FS_BLOCKSIZE );
   fs->block_cache = addr2blkbase(( block_cache+FS_BLOCKSIZE ));
   memset( fs->block_cache, 0, FS_BCACHE_BLOCKS * FS_BLOCKSIZE );
   memset( fs->d2cmap, BLK_INVALID, sizeof(unsigned int) * FS_BCACHE_BLOCKS ); 
