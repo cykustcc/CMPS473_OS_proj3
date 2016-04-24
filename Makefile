@@ -37,6 +37,14 @@ cse473-p3 : cse473-p3.o cse473-util.o cse473-list.o cse473-filesys.o cse473-disk
 clean:
 	rm -f *.o *~ $(TARGETS) $(LIBOBJS) lib$(UTILLIB).a
 
+run:
+	rm -f myfile.txt
+	./cse473-p3 myfile.txt cmd1
+	./cse473-p3 myfile.txt cmd2
+	./cse473-p3 myfile.txt cmd3
+	./cse473-p3 myfile.txt cmd4
+	./cse473-p3 myfile.txt cmd5
+
 BASENAME=p3
 PSUID=938538712
 tar: 

@@ -305,6 +305,9 @@ void blockToBeJournalled( dblock_t *cblk, unsigned int blknum )
 {
   /* add this block and associated block number (for disk block) to the 
      file system journal (fs->journal_blks) */
+  jblock_t *jblk = fs->journal_blks[fs->journal_blk_count++];
+  jblk->blk=cblk;           /* block to be journalled */
+  jblk->index=blknum;      /* disk block number */
 }
 
 
@@ -531,7 +534,15 @@ void diskCreateDentry( unsigned int base, dir_t *dir, dentry_t *dentry )
   
   // Task #3 
   // Which blocks to journal?  call blockToBeJournalled
-
+  // blockToBeJournalled(cblk,cblknum); // Seems cause Segmentation fault
+  blockToBeJournalled(next_dblk,nextblknum);
+  // if (nextblk!=NULL)
+  // {
+  //   blockToBeJournalled(next_dblk,nextblknum);
+  // }else{
+  //   blockToBeJournalled(cblk,diskdir->freeblk);
+  // }
+  
 
   if (empty == BLK_INVALID ) {
     errorMessage("diskCreateDentry: bad bitmap");
@@ -603,7 +614,7 @@ int diskCreateFile( unsigned int base, dentry_t *dentry, file_t *file )
 
   // Task #3 
   // Which blocks to journal?  call blockToBeJournalled
-
+  // blockToBeJournalled(cblk,block); // seems cause segmentation fault.
 
   return 0;
 }
@@ -657,8 +668,8 @@ unsigned int diskWrite( unsigned int *disk_offset, unsigned int block,
 
   // Task #1
   /* write the cached block to the journal or disk?  */
-
-
+  // I think it should be written to the disk
+  memcpy(buf, disk_offset, block_bytes);
   return block_bytes;  
 }
 
@@ -742,6 +753,7 @@ unsigned int diskGetBlock( file_t *file, unsigned int index )
   // Task #3 
   // Which blocks to journal?  call blockToBeJournalled
   // NOTE: See caddr2dblk to compute block number from fcb
+
 
   return dblk_index;
 }

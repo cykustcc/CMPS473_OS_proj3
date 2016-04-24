@@ -237,7 +237,7 @@ typedef struct fstat {
 
 ***********************************************************************/
 
-/* disk directory entry hash component */
+/* disk directory entry hash component, totally 2 bytes. */
 typedef struct ddentry_hash {
   unsigned short next_dentry; /* next dentry block in hash table */
   unsigned short next_slot;   /* next dentry slot in hash table */

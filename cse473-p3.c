@@ -54,7 +54,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLIENT_USAGE "USAGE: cse473-p3 <fs_file> <instruction_file>\n"
 #define MAX_ARGS 5
 #define MAX_LINE_SIZE 750
-
 /* macros */
 
 /* program variables */

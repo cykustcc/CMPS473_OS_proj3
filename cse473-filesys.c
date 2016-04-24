@@ -123,7 +123,15 @@ int fsJournalCommit( filesys_t *fs )
 
   /* Get the fs->journal_blks written to the journal by calling the 
      diskJournalCreate* functions in cse473-disk.c */
-
+  for (int i = 0; i < FS_JOURNAL_BLOCKS; ++i)
+  {
+    jblock_t *jblk = fs->journal_blks[i];
+    if (jblk->index!=BLK_INVALID)
+    {
+      diskJournalCreateBlock(jblk->blk);
+      ct++;
+    }
+  }
   return ct; 
 }
 
