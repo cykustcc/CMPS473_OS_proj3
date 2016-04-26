@@ -120,17 +120,23 @@ void fsJournalReset( filesys_t *fs )
 int fsJournalCommit( filesys_t *fs )
 {
   int ct = 0;
-
+  //diskJournalCreateTxnBegin() should be used.
+  //should be used.
   /* Get the fs->journal_blks written to the journal by calling the 
      diskJournalCreate* functions in cse473-disk.c */
-  for (int i = 0; i < FS_JOURNAL_BLOCKS; ++i)
+  ct = fs->journal_blk_count;
+  if (ct!=0)
   {
-    jblock_t *jblk = fs->journal_blks[i];
-    if (jblk->index!=BLK_INVALID)
+      txn_t *txb=diskJournalCreateTxnBegin(fs->journal_blks,ct);
+    for (int i = 0; i < ct; ++i)
     {
-      diskJournalCreateBlock(jblk->blk);
-      ct++;
+      jblock_t *jblk = fs->journal_blks[i];
+      // if (jblk->index!=BLK_INVALID)
+      // {
+        diskJournalCreateBlock(jblk->blk);
+      // }
     }
+    diskJournalCreateTxnEnd(txb,ct);
   }
   return ct; 
 }

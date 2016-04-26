@@ -1,3 +1,4 @@
 cse473-p3
 *.o
-myfile.txt
+myfile
+.DS_Store

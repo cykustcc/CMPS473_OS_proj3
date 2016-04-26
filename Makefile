@@ -38,12 +38,12 @@ clean:
 	rm -f *.o *~ $(TARGETS) $(LIBOBJS) lib$(UTILLIB).a
 
 run:
-	rm -f myfile.txt
-	./cse473-p3 myfile.txt cmd1
-	./cse473-p3 myfile.txt cmd2
-	./cse473-p3 myfile.txt cmd3
-	./cse473-p3 myfile.txt cmd4
-	./cse473-p3 myfile.txt cmd5
+	rm -f myfile
+	./cse473-p3 myfile cmd1
+	./cse473-p3 myfile cmd2
+	./cse473-p3 myfile cmd3
+	./cse473-p3 myfile cmd4
+	./cse473-p3 myfile cmd5
 
 BASENAME=p3
 PSUID=938538712
