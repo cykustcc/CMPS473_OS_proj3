@@ -201,10 +201,10 @@ int diskJournalCreateTxnEnd( txn_t *txb,  unsigned int ct )
   txe_blk->next = (blknum + 1) % FS_JOURNAL_BLOCKS;   /* next journal data block index */
   
   /* populate txe block */
-  txe->id = jrnl->next_txn++;   /* increment jrnl transaction id */
-  txe->ct = ct;                 /* number of data blocks to be journalled */
-    
-  for (int i=0; i < ct; i++ ) {
+  txe->id = txb->id;   /* increment jrnl transaction id */
+  txe->ct = txb->ct;                 /* number of data blocks to be journalled */
+  int i;
+  for (i=0; i < txb->ct; i++ ) {
     txe->blknums[i] =  txb->blknums[i];  /* record the disk block indices for the journalled blocks here */
   }
   return 1;
@@ -227,7 +227,7 @@ void diskJournalCheckpoint( void )
   dblock_t *jblk = (dblock_t *)disk2addr( fs->base, block2offset( dfs->journal ));
   journal_t *jrnl = (journal_t *)disk2addr( jblk, sizeof( dblock_t ));   // journal superblock data
 
-  int block_index = 0;
+  int blk_index = 0;
   txn_t *txn = (txn_t *)NULL;
   /* apply transactions from the current start of the journal until end */
   while ( jrnl->start != jrnl->end ) {
@@ -238,16 +238,17 @@ void diskJournalCheckpoint( void )
 
     jrnl_blk_num = jrnl->start % FS_JOURNAL_BLOCKS;
     jrnl_blk = (dblock_t *)disk2addr( jbase(fs->base), block2offset( jrnl_blk_num ));
-    jrnl_blk_num=addr2block(jrnl_blk,fs->base);
+    // jrnl_blk_num=addr2block(jrnl_blk,fs->base);
     // journal: jrnl_blk - dblock_t for the journal block
     // jrnl_blk_num - block number on disk of journal block (should be 2-21)
 
     if (jrnl_blk->free == TXB_BLOCK || jrnl_blk->free == TXE_BLOCK) {
       txn = (txn_t *)disk2addr( jrnl_blk, sizeof( dblock_t ));
-      block_index = 0;
+      blk_index = 0;
     } else {
-      blknum = txn->blknums[block_index];
+      blknum = txn->blknums[blk_index];
       dblk = (dblock_t *)disk2addr( fs->base, block2offset( blknum ));
+      jrnl_blk_num = addr2block(jrnl_blk, fs->base);
       // before: dblk - disk block info before update using journal block 
       // blknum - block number on disk of the block (> 23)
       printf("journal: jblk #: %d; jblk->free: %d; jblk->st: %d; jblk->next: %d\n", 
@@ -259,13 +260,14 @@ void diskJournalCheckpoint( void )
       // checkpt: dblk - disk block info before update using journal block
       printf("checkpt: dblk #: %d; dblk->free: %d; dblk->st: %d; dblk->next: %d\n", 
         blknum, dblk->free, dblk->st.data_end, dblk->next );
-      block_index++;
+      blk_index++;
     }
-    jrnl_blk->free=FREE_BLOCK;
+    
 
     // Task #7
     // Set the blocks used in the journal transaction to free (FREE_BLOCK) and update the
-    // journal (jrnl) metadata (start, ct, end, ...) as necessary  
+    // journal (jrnl) metadata (start, ct, end, ...) as necessary 
+    jrnl_blk->free=FREE_BLOCK; 
     jrnl->start++;
     jrnl->ct--;
   }
@@ -342,9 +344,10 @@ void blockToBeJournalled( dblock_t *cblk, unsigned int blknum )
 {
   /* add this block and associated block number (for disk block) to the 
      file system journal (fs->journal_blks) */
-    jblock_t *jblk = fs->journal_blks[fs->journal_blk_count++];
+    jblock_t *jblk = fs->journal_blks[fs->journal_blk_count];
     jblk->index=blknum;
     jblk->blk=cblk;
+    fs->journal_blk_count++;
 }
 
 
@@ -571,9 +574,10 @@ void diskCreateDentry( unsigned int base, dir_t *dir, dentry_t *dentry )
   
   // Task #3 
   // Which blocks to journal?  call blockToBeJournalled
-    if(nextblk)blockToBeJournalled(nextblk, nextblknum);
-    // blockToBeJournalled(cblk, addr2block(dblk,fs->base));
-    blockToBeJournalled(cblk, cblknum);
+    blockToBeJournalled( cblk, cblknum );
+    if (nextblk != NULL) {
+      blockToBeJournalled( nextblk, nextblknum );
+    }
 
 
   if (empty == BLK_INVALID ) {
@@ -703,7 +707,6 @@ unsigned int diskWrite( unsigned int *disk_offset, unsigned int block,
   // Task #1
   /* write the cached block to the journal or disk?  */
   memcpy( dblk, cblk, FS_BLOCKSIZE );
-  blockToBeJournalled(cblk, block);
   return block_bytes;  
 }
 
@@ -760,7 +763,7 @@ unsigned int diskRead( unsigned int block, char *buf, unsigned int bytes,
 unsigned int diskGetBlock( file_t *file, unsigned int index )
 {
   fcb_t *fcb = file->diskfile;
-  unsigned int dblock_index;
+  unsigned int dblk_index;
 
   if ( fcb == NULL ) {
     errorMessage("diskGetBlock: No file control block for file");
@@ -768,33 +771,30 @@ unsigned int diskGetBlock( file_t *file, unsigned int index )
   }
 
   /* if the index is already in the file control block, then return that */
-  dblock_index = fcb->blocks[index]; 
+  dblk_index = fcb->blocks[index]; 
  
-  if ( dblock_index != BLK_INVALID ) {
-    return dblock_index;
+  if ( dblk_index != BLK_INVALID ) {
+    return dblk_index;
   }
 
-  allocDblock( &dblock_index, FILE_DATA );
+  allocDblock( &dblk_index, FILE_DATA );
 
-  if ( dblock_index == BLK_INVALID ) {
+  if ( dblk_index == BLK_INVALID ) {
     return BLK_INVALID;
   }
 
   // P3: Meta-Data 
   /* update the cached fcb with the new block */
-  fcb->blocks[index] = dblock_index;
+  fcb->blocks[index] = dblk_index;
 
   // Task #3
+  // Which blocks to journal?  call blockToBeJournalled
+  // NOTE: See caddr2dblk to compute block number from fcb
   dblock_t *cblk = (dblock_t *)addr2blkbase(fcb);
   unsigned int blknum = caddr2dblk(cblk, fs->block_cache, fs->c2dmap);
   blockToBeJournalled(cblk,blknum);
 
-  // blockToBeJournalled(addr2blkbase(fcb), dblock_index);
-
-  // Which blocks to journal?  call blockToBeJournalled
-  // NOTE: See caddr2dblk to compute block number from fcb
-
-  return dblock_index;
+  return dblk_index;
 }
 
 
