@@ -851,3 +851,98 @@ int fileSeek( unsigned int fd, unsigned int index )
 }
 
 
+void fsBlkPrint( int blknum ){
+    int i;
+    dblock_t *dblk;
+    if (blknum >= FS_BLOCKS || blknum < 0){
+      printf("No such block!\n");
+    }else{
+      switch(blknum){
+ 
+        case 0: // if it's file system superblock                                                       
+          printf("------ File System Superblock ------\n");
+          dfilesys_t *fssup = (dfilesys_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+          printf("bsize: %d\n", fssup->bsize);
+          printf("journal: %d\n", fssup->journal);
+          printf("firstfree: %d\n", fssup->firstfree);
+          printf("root: %d\n\n", fssup->root);
+          break;
+        case 1: // if it's journal superblock                                                           
+          printf("------ Journal Superblock ------\n");
+          journal_t *jsup = (journal_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+          printf("size: %d\n", jsup->size);
+          printf("start: %d\n", jsup->start);
+          printf("end: %d\n", jsup->end);
+          printf("ct: %d\n", jsup->ct);
+          printf("next_txn: %d\n\n", jsup->next_txn);
+          break;
+        case 22:
+          printf("------ Directory Block ------\n");
+          ddir_t *dirb = (ddir_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+          printf("buckets: %d\n", dirb->buckets);
+          printf("freeblk: %d\n", dirb->freeblk);
+          printf("free: %d\n\n", dirb->free);
+ 
+
+          break;
+        default:
+          dblk = (dblock_t*)(block2addr(fs->base,blknum));
+          switch(dblk->free){
+            case FREE_BLOCK:
+              printf("------ Free Block ------\n\n");
+              break;
+            case TXB_BLOCK:
+              printf("------ TXB BLOCK ------\n");
+              txn_t *txbpt = (txn_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+              printf("id: %d\n", txbpt->id);
+              printf("ct: %d\n", txbpt->ct);
+              printf("blknums: ");
+              for (i = 0; i < 20; i++){
+                if(txbpt->blknums[i] >= 2)
+                  printf("%d ", txbpt->blknums[i]);
+              }
+              printf("\n\n");
+              break;
+            case TXE_BLOCK:
+              printf("------ TXE BLOCK ------\n");
+              txn_t *txept = (txn_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+              printf("id: %d\n\n", txept->id);
+            case DENTRY_BLOCK:
+              printf("------ Dentry Block ------\n");
+              unsigned int map = dblk->st.dentry_map;
+              ddentry_t *dptr;
+              for (i = 0; i < 10; i++){
+                if(!(map & 1)){
+                  printf("---ddentry_t:\n");
+                  dptr = (ddentry_t*)((char*)dblk + dentry2offset(i));
+                  printf("name: %s\n", dptr->name);
+                  printf("block: %d\n\n", dptr->block);
+                }
+                map >>= 1;
+              }
+              break;
+            case FILE_DATA:
+              printf("------ File Data Block ------\n");
+              printf("%s\n\n", (char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+              break;
+            case FILE_BLOCK:
+              printf("------ File Control Block ------\n");
+              fcb_t *fcbp = (fcb_t*)((char*)block2addr(fs->base,blknum)+sizeof(dblock_t));
+              printf("flags: %d\n",fcbp->flags);
+              printf("size: %d\n", fcbp->size);
+              printf("file data block indices: ");
+              for (i = 0; i < 10; i++){
+                if(fcbp->blocks[i]>=20 && fcbp->blocks[i]<=70){
+                  printf("%d ", fcbp->blocks[i]);
+                }
+              }
+              printf("\n\n");
+              break;
+            default:
+              printf("NOT VALID BLOCK!\n\n");
+          }
+      }
+    }
+}
+
+

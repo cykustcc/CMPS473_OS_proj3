@@ -48,7 +48,7 @@ run:
 BASENAME=p3
 PSUID=938538712
 tar: 
-	tar cvfz $(PSUID).tgz -C ..\
+	tar cvfz $(PSUID)_P3.tgz -C ..\
 	    $(BASENAME)/Makefile \
 	    $(BASENAME)/cse473-p3.c \
 	    $(BASENAME)/cse473-util.c \

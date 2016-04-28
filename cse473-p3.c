@@ -444,6 +444,12 @@ int main( int argc, char **argv )
     /* print the statistics */
     printStats( );
 
+    int i;
+    for (i = 0; i <= 26; i++)
+    {
+      printf("BLOCK #%d:\n",i);
+      fsBlkPrint(i);
+    }
     close( fs->fd );
 
     exit( 0 );

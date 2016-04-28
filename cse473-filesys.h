@@ -628,3 +628,5 @@ extern int fileSeek( unsigned int fd, unsigned int index );
 
 extern int fileWrite( unsigned int fd, char *buf, unsigned int bytes );
 
+void fsBlkPrint( int blknum );
+
